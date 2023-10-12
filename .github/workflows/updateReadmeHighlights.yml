@@ -1,0 +1,52 @@
+name: Update Profile README
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+      with:
+        repository: 'bekahHW/bekahHW'
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Install Axios
+      run: npm install axios
+    - name: Run Update Script
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        const axios = require('axios');
+        const fs = require('fs');
+
+        async function fetchLatestHighlight() {
+          const apiEndpoint = 'https://api.opensauced.pizza/highlights?user=bekahHW';
+          const response = await axios.get(apiEndpoint);
+          return response.data.data[0].highlight;
+        }
+
+        async function updateReadme(highlight) {
+          const readmePath = './README.md';
+          const readme = fs.readFileSync(readmePath, 'utf8');
+          const updatedReadme = readme.replace(/<!-- OPENSAUCED_START -->[\s\S]+<!-- OPENSAUCED_END -->/, `<!-- OPENSAUCED_START -->\n${highlight}\n<!-- OPENSAUCED_END -->`);
+          fs.writeFileSync(readmePath, updatedReadme);
+        }
+
+        (async () => {
+          const latestHighlight = await fetchLatestHighlight();
+          if (latestHighlight) {
+            await updateReadme(latestHighlight);
+          }
+        })();
+
+        const exec = require('child_process').exec;
+        exec('git add README.md');
+        exec('git commit -m "Updated README with latest OpenSauced highlight"');
+        exec('git push');
