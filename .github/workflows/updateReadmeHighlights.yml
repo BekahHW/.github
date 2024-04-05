@@ -2,33 +2,34 @@ name: Update README with Latest OpenSauced Highlight
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
-
+    - cron: '15 19 * * *' 
 jobs:
   update-readme:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          repository: 'BekahHW/BekahHW'
       
+      # Set up Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'  
-
+          node-version: '14'
+      
+      # Fetch Latest Highlight using Axios action
+      
+      # Custom Script for Fetching Data & Updating README
       - name: Fetch Latest Highlight and Update README
-        run: |
-          npm install axios
-          node updateReadme.js
+        run: node .github/scripts/updateReadme.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit and Push if Changed
+      # Commit and Push Changes
+      - name: Commit and Push if README Updated
         run: |
-          git config --global user.email "rhawrot@gmail.com"
-          git config --global user.name "BekahHW"
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@github.com'
           git add README.md
-          git commit -m "Updated README with the latest OpenSauced highlight" || exit 0
+          git commit -m "Updated README with the latest OpenSauced highlight" || echo "No changes to commit"
           git push
